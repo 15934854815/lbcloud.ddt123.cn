@@ -6,7 +6,6 @@
  */
 namespace Api\Controller;
 use Api\Service\AliyunOSS;
-use Think\Exception;
 
 class PlayerController extends CommonController
 {
@@ -113,8 +112,6 @@ class PlayerController extends CommonController
 			$led_id = $player['id'];
 			$cmd_model = D("Command");
 			$cmds_list = $cmd_model->cmds_list($led_id);
-			//多播放方案版本
-			//$cmds_list = $cmd_model->cmd_lists($led_id);
 			$cmds = array();
 			$cmd_ids = array();
 			foreach($cmds_list as $val){
@@ -286,15 +283,6 @@ class PlayerController extends CommonController
 							);
 						}
 						break;
-                    /*版本更新*/
-                    case "10":
-                        if($param){
-                            $cmdParam = array(
-                                "version" => $param['version'],
-                                "url" => $param['url']
-                            );
-                        }
-                        break;
 					default:
 						break;
 				}
@@ -307,30 +295,26 @@ class PlayerController extends CommonController
 				}
 			}
 			/*9-终端长连接重连*/
-			try{
-                //$redis_serv = \Think\Cache::getInstance('Redis', array('host'=>C("redis_server")));
-                $redis_serv = new \Redis();
-                $redis_serv->connect(C("redis_server"), C("redis_port"));
-                $cache_key = md5("{$id}_{$key}_{$mac}_fd");
-                $pl_online = $redis_serv->get($cache_key);
-                unset($redis_serv);
-                if(!$pl_online){
-                    $cfg_model = D("Config");
-                    $ws = $cfg_model->ws_config();
-                    $cmdParam = array(
-                        /*'ws_ip'	=> $ws['ip'],
-                        'ws_port' => $ws['port']*/
-                        'host' => "ws://{$ws['ip']}:{$ws['port']}"
-                    );
-                    $cmds[] = array(
-                        "CmdId"		=>	"0",
-                        "CmdType"	=>	9,
-                        "CmdParam"	=>	base64_encode(json_encode($cmdParam))
-                    );
-                }
-            }catch(\Exception $e){
-
-            }
+			//$redis_serv = \Think\Cache::getInstance('Redis', array('host'=>C("redis_server")));
+			$redis_serv = new \Redis();
+			$redis_serv->connect(C("redis_server"), C("redis_port"));
+			$cache_key = md5("{$id}_{$key}_{$mac}_fd");
+			$pl_online = $redis_serv->get($cache_key);
+			unset($redis_serv);
+			if(!$pl_online){
+				$cfg_model = D("Config");
+				$ws = $cfg_model->ws_config();
+				$cmdParam = array(
+					/*'ws_ip'	=> $ws['ip'],
+					'ws_port' => $ws['port']*/
+					'host' => "ws://{$ws['ip']}:{$ws['port']}"
+				);
+				$cmds[] = array(
+					"CmdId"		=>	"0",
+					"CmdType"	=>	9,
+					"CmdParam"	=>	base64_encode(json_encode($cmdParam))
+				);
+			}
 			//更改命令已下发
 			$cmd_model->cmd_issued($cmd_ids);
 			$respones = array(
@@ -419,14 +403,14 @@ class PlayerController extends CommonController
 		$obj = $this->param;
 		$bind_id	= $obj['Id'];
 		$bind_key	= $obj['Key'];
-        $mac		= strtoupper(str_replace(':', '-', $obj['Mac']));
-        $mac		= str_replace('-', '', $obj['Mac']);
-        $picture_bucket = C("oss_picture_bucket");
-        $AliyunOSS = new AliyunOSS();
-        $object = "{$mac}/".date("Ymd")."/".time().".jpg";
-        $sign_url = $AliyunOSS->upload_sign_uri($object, $picture_bucket, 1800);
-        $respones = array("err_code"=>"000000","msg"=>"ok","url"=>$sign_url);
-        $this->ajaxReturn($respones);
+		$mac		= strtoupper(str_replace(':', '-', $obj['Mac']));
+		$mac		= str_replace('-', '', $obj['Mac']);
+		$picture_bucket = C("oss_picture_bucket");
+		$AliyunOSS = new AliyunOSS();
+		$object = "{$mac}/".date("Ymd")."/".time().".jpg";
+		$sign_url = $AliyunOSS->upload_sign_uri($object, $picture_bucket, 1800);
+		$respones = array("err_code"=>"000000","msg"=>"ok","url"=>$sign_url);
+		$this->ajaxReturn($respones);
 	}
 	
 	/**
@@ -477,15 +461,15 @@ class PlayerController extends CommonController
 			$media_name = end(explode('/', str_replace('\\', '/', $obj['MediaName'])));
 			$media_md5 = strtolower($obj['MediaMD5']);
 			$led_info = $led_model->screen_by_id($player['id']);
-			$user_id = $led_info['uid'];
+			$user_id = $led_info['id'];
 			$media_id = $media_model->media_exists($media_name, $media_md5, $user_id);
 			if($media_id){
 				$data = array();
 				$data['screen_id'] = $player['id'];
 				$data['media_name'] = mysql_escape_string($media_name);
 				$data['media_md5'] = $media_md5;
-				$data['start'] = date("Y-m-d H:i:s", strtotime($obj['StartTime']));
-				$data['end'] = date("Y-m-d H:i:s", strtotime($obj['EndTime']));
+				$data['start'] = $obj['StartTime'];
+				$data['end'] = $obj['EndTime'];
 				$data['addtime'] = NOW_TIME;
 				$record_model = D("Record");
 				$res = $record_model->add($data);

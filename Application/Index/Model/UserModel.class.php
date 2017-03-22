@@ -170,9 +170,13 @@ class UserModel extends Model
     	if(is_administrator()){
     		$map['type'] = 2;
     	}else{
-    		$uid = session("user_auth.uid");
-    		$map['type'] = 2;
-    		$map['puid'] = $uid;
+    		if($this->is_root(session("user_auth.uid"))){
+    			$map['type'] = 2;
+    		}else{
+    			$uid = session("user_auth.uid");
+	    		$map['type'] = 2;
+	    		$map['puid'] = $uid;
+    		}
     	}
     	$users = $this->field($field)->where($map)->select();
     	$agents = $this->all_agents();
@@ -302,5 +306,20 @@ class UserModel extends Model
 			return $this->where($map)->getField("email", true);
 		}
 		return array();
+	}
+	
+	/**
+	 * 根据用户ID获取上级代理商信息
+	 */
+	public function agent_by_uid($user_id){
+		$result = array();
+		$puid = $this->where("uid = {$user_id}")->getField("puid");
+		if($puid){
+			$map = array();
+			$map['uid'] = $puid;
+			$map['type'] = 1;
+			$result = $this->where($map)->find();
+		}
+		return $result;
 	}
 }

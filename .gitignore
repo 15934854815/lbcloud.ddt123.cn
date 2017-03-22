@@ -3,3 +3,4 @@ composer.lock
 *.log
 .project
 Application/Runtime/
+.gitognore

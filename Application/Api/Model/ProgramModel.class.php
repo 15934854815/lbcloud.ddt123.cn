@@ -119,4 +119,27 @@ class ProgramModel extends Model
 			return false;
 		}
 	}
+	
+	/**
+	 * 所有备份播放方案
+	 * @param $user_id 用户ID
+	 * @return array
+	 */
+	public function all_backup_plan($user_id){
+		$map = array();
+		$map['user_id'] = $user_id;
+		$map['backup'] = 1;
+		return $this->where($map)->select();
+	}
+	
+	/**
+	 * 播放方案是否备份
+	 */
+	public function plan_is_backup($name, $user_id){
+		$map = array();
+		$map['name'] = mysql_escape_string($name);
+		$map['user_id'] = $user_id;
+		$map['backup'] = 1;
+		return $this->where($map)->getField('id');
+	}
 }

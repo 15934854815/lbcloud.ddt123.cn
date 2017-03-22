@@ -22,7 +22,11 @@ return array(
 		'refresh_token',
 		'configuration',
 		'screens',
-		'programs',
+		'plans',
 		'heartbeat'
 	),
+	
+	/*告警通知*/
+   	"sms_server"	=>	"http://msg.ddt123.cn/api.php/Api/sendmsg/sendMobMsg?",
+   	"email_server"	=>	"http://123.56.240.172:8084/index.php?m=home&c=index&a=Mailto&",
 );
